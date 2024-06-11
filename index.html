@@ -1,295 +1,222 @@
 <div id="unity-container" class="unity-desktop">
   <canvas id="unity-canvas" width=960 height=600></canvas>
-  <div id="unity-loading-bar">
-    <div id="unity-logo"></div>
-    <div id="unity-progress-bar-empty">
-      <div id="unity-progress-bar-full"></div>
-    </div>
-  </div>
-  <div id="unity-warning"> </div>
-  <div id="unity-footer">
-    <div id="unity-webgl-logo"></div>
-    <div id="unity-fullscreen-button"></div>
-    <div id="unity-build-title">rxgtest</div>
-  </div>
 </div>
 <script>
-  var container = document.querySelector("#unity-container");
-  var canvas = document.querySelector("#unity-canvas");
-  var loadingBar = document.querySelector("#unity-loading-bar");
-  var progressBarFull = document.querySelector("#unity-progress-bar-full");
-  var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-  var warningBanner = document.querySelector("#unity-warning");
-
-  // Shows a temporary message banner/ribbon for a few seconds, or
-  // a permanent error message on top of the canvas if type=='error'.
-  // If type=='warning', a yellow highlight color is used.
-  // Modify or remove this function to customize the visually presented
-  // way that non-critical warnings and error messages are presented to the
-  // user.
-  function unityShowBanner(msg, type) {
-    function updateBannerVisibility() {
-      warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-    }
-    var div = document.createElement('div');
-    div.innerHTML = msg;
-    warningBanner.appendChild(div);
-    if (type == 'error') div.style = 'background: red; padding: 10px;';
-    else {
-      if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-      setTimeout(function() {
-        warningBanner.removeChild(div);
-        updateBannerVisibility();
-      }, 5000);
-    }
-    updateBannerVisibility();
-  }
-
-  var buildUrl = "Build";
-  var loaderUrl = buildUrl + "/networkDiagram.loader.js";
+  var fdd // Will become unityInstance.
+  const canvas = document.querySelector("#unity-canvas");
+  const buildPath = "/space/operator_portals/fddprototype/Build/networkDiagram.";
+  var loaderUrl = buildPath + "loader.js";
   var config = {
-    dataUrl: buildUrl + "/networkDiagram.data",
-    frameworkUrl: buildUrl + "/networkDiagram.framework.js",
-    codeUrl: buildUrl + "/networkDiagram.wasm",
-    streamingAssetsUrl: "StreamingAssets",
+    dataUrl: buildPath + "data",
+    frameworkUrl: buildPath + "framework.js",
+    codeUrl: buildPath + "wasm",
+    streamingAssetsUrl: "/space/operator_portals/fddprototype/StreamingAssets",
     companyName: "DefaultCompany",
     productName: "rxgtest",
     productVersion: "0.1",
-    showBanner: unityShowBanner,
+    showBanner: false,
   };
 
-  // By default Unity keeps WebGL canvas render target size matched with
-  // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-  // Set this to false if you want to decouple this synchronization from
-  // happening inside the engine, and you would instead like to size up
-  // the canvas DOM size and WebGL render target sizes yourself.
-  // config.matchWebGLToCanvasSize = false;
-
-  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-    // Mobile device style: fill the whole browser client area with the game canvas:
-
-    var meta = document.createElement('meta');
-    meta.name = 'viewport';
-    meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-    document.getElementsByTagName('head')[0].appendChild(meta);
-    container.className = "unity-mobile";
-    canvas.className = "unity-mobile";
-
-    // To lower canvas resolution on mobile devices to gain some
-    // performance, uncomment the following line:
-    // config.devicePixelRatio = 1;
-
-    unityShowBanner('WebGL builds are not supported on mobile devices.');
-  } else {
-    // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-
-    canvas.style.width = "960px";
-    canvas.style.height = "600px";
-  }
-
-  var fdd
-  var haleSF1 = JSON.stringify(
-    {
-      "nodes": [
-        {
-          "label": "Ruckus ICX 7550-48ZP core",
-          "description": "Stackable ICX7550-48Z-POE",
-          "id": "Ruckus ICX 7550-48ZP core",
-          "image": "ICX-7150-24",
-          "ipAddress": "172.30.6.2",
-          "group": 1,
-          "subgroup": 0,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "CC1",
-          "description": "",
-          "id": "CC1",
-          "image": "eng_device",
-          "ipAddress": "",
-          "group": 2,
-          "subgroup": 0,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "TL-SG2210P garage",
-          "description": "TL-SG2210P 3.20",
-          "id": "TL-SG2210P garage",
-          "image": "TL-SG2210P",
-          "ipAddress": "172.30.6.7",
-          "group": 3,
-          "subgroup": 0,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "TL-SG2210P david",
-          "description": "TL-SG2210P 3.20",
-          "id": "TL-SG2210P david",
-          "image": "TL-SG2210P",
-          "ipAddress": "172.30.6.8",
-          "group": 3,
-          "subgroup": 0,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "Ruckus ICX 7150-C12P office",
-          "description": "Stackable ICX7150-C12-POE",
-          "id": "Ruckus ICX 7150-C12P office",
-          "image": "ICX-7150-12",
-          "ipAddress": "172.30.6.6",
-          "group": 4,
-          "subgroup": 0,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "David R850",
-          "description": "34:20:e3:28:8b:c0",
-          "id": "David R850",
-          "image": "",
-          "ipAddress": "172.30.6.253",
-          "group": 3,
-          "subgroup": 2,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "Ruckus ICX 7150-C12P guest",
-          "description": "Stackable ICX7150-C12-POE",
-          "id": "Ruckus ICX 7150-C12P guest",
-          "image": "ICX-7150-12",
-          "ipAddress": "172.30.6.3",
-          "group": 5,
-          "subgroup": 0,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "Router1",
-          "description": "",
-          "id": "Router1",
-          "image": "router",
-          "ipAddress": "fd00:6c24::2",
-          "group": 2,
-          "subgroup": 1,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "Router2",
-          "description": "",
-          "id": "Router2",
-          "image": "router",
-          "ipAddress": "100.64.0.2",
-          "group": 2,
-          "subgroup": 1,
-          "groupname": "",
-          "depth": 0
-        },
-        {
-          "label": "Router3",
-          "description": "",
-          "id": "Router3",
-          "image": "router",
-          "ipAddress": "172.16.0.101",
-          "group": 2,
-          "subgroup": 1,
-          "groupname": "",
-          "depth": 0
-        }      
-      ],
-      "links": [
-        {
-          "source": "Ruckus ICX 7550-48ZP core",
-          "target": "CC1",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "Ruckus ICX 7550-48ZP core",
-          "target": "TL-SG2210P garage",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "TL-SG2210P garage",
-          "target": "TL-SG2210P david",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "Ruckus ICX 7550-48ZP core",
-          "target": "Ruckus ICX 7150-C12P office",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "TL-SG2210P david",
-          "target": "David R850",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "Ruckus ICX 7550-48ZP core",
-          "target": "Ruckus ICX 7150-C12P guest",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "CC1",
-          "target": "Router1",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "CC1",
-          "target": "Router2",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        },
-        {
-          "source": "CC1",
-          "target": "Router3",
-          "length": 0,
-          "group": 0,
-          "description": ""
-        }
-      ]
-    }
-  )
-
   function testSF1() {
-    fdd.SendMessage('ForceDirectedDiagram', 'ImportDiagram', haleSF1);
+    loadDiagram(haleSF1);
+  }
+  function loadDiagram(json){
+    fdd.SendMessage('ForceDirectedDiagram', 'ImportDiagram', JSON.stringify(json));
+  }
+  function setFullScreen() {
+    fdd.SetFullscreen(1);
   }
 
-  loadingBar.style.display = "block";
-
-  var script = document.createElement("script");
+  const script = document.createElement("script");
   script.src = loaderUrl;
   script.onload = () => {
-    createUnityInstance(canvas, config, (progress) => {
-      progressBarFull.style.width = 100 * progress + "%";
-    }).then((unityInstance) => {
-      loadingBar.style.display = "none";
+    createUnityInstance(canvas, config, (progress) => {})
+    .then((unityInstance) => {
       fdd = unityInstance;
-      fullscreenButton.onclick = () => {
-        unityInstance.SetFullscreen(1);
-      };
     }).catch((message) => {
       alert(message);
     });
   };
   document.body.appendChild(script);
+
+  const haleSF1 = {
+    "nodes": [
+      {
+        "label": "Ruckus ICX 7550-48ZP core",
+        "description": "Stackable ICX7550-48Z-POE",
+        "id": "Ruckus ICX 7550-48ZP core",
+        "image": "ICX-7150-24",
+        "ipAddress": "172.30.6.2",
+        "group": 1,
+        "subgroup": 0,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "CC1",
+        "description": "",
+        "id": "CC1",
+        "image": "eng_device",
+        "ipAddress": "",
+        "group": 2,
+        "subgroup": 0,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "TL-SG2210P garage",
+        "description": "TL-SG2210P 3.20",
+        "id": "TL-SG2210P garage",
+        "image": "TL-SG2210P",
+        "ipAddress": "172.30.6.7",
+        "group": 3,
+        "subgroup": 0,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "TL-SG2210P david",
+        "description": "TL-SG2210P 3.20",
+        "id": "TL-SG2210P david",
+        "image": "TL-SG2210P",
+        "ipAddress": "172.30.6.8",
+        "group": 3,
+        "subgroup": 0,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "Ruckus ICX 7150-C12P office",
+        "description": "Stackable ICX7150-C12-POE",
+        "id": "Ruckus ICX 7150-C12P office",
+        "image": "ICX-7150-12",
+        "ipAddress": "172.30.6.6",
+        "group": 4,
+        "subgroup": 0,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "David R850",
+        "description": "34:20:e3:28:8b:c0",
+        "id": "David R850",
+        "image": "",
+        "ipAddress": "172.30.6.253",
+        "group": 3,
+        "subgroup": 2,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "Ruckus ICX 7150-C12P guest",
+        "description": "Stackable ICX7150-C12-POE",
+        "id": "Ruckus ICX 7150-C12P guest",
+        "image": "ICX-7150-12",
+        "ipAddress": "172.30.6.3",
+        "group": 5,
+        "subgroup": 0,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "Router1",
+        "description": "",
+        "id": "Router1",
+        "image": "router",
+        "ipAddress": "fd00:6c24::2",
+        "group": 2,
+        "subgroup": 1,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "Router2",
+        "description": "",
+        "id": "Router2",
+        "image": "router",
+        "ipAddress": "100.64.0.2",
+        "group": 2,
+        "subgroup": 1,
+        "groupname": "",
+        "depth": 0
+      },
+      {
+        "label": "Router3",
+        "description": "",
+        "id": "Router3",
+        "image": "router",
+        "ipAddress": "172.16.0.101",
+        "group": 2,
+        "subgroup": 1,
+        "groupname": "",
+        "depth": 0
+      }      
+    ],
+    "links": [
+      {
+        "source": "Ruckus ICX 7550-48ZP core",
+        "target": "CC1",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "Ruckus ICX 7550-48ZP core",
+        "target": "TL-SG2210P garage",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "TL-SG2210P garage",
+        "target": "TL-SG2210P david",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "Ruckus ICX 7550-48ZP core",
+        "target": "Ruckus ICX 7150-C12P office",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "TL-SG2210P david",
+        "target": "David R850",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "Ruckus ICX 7550-48ZP core",
+        "target": "Ruckus ICX 7150-C12P guest",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "CC1",
+        "target": "Router1",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "CC1",
+        "target": "Router2",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      },
+      {
+        "source": "CC1",
+        "target": "Router3",
+        "length": 0,
+        "group": 0,
+        "description": ""
+      }
+    ]
+  }
+  
 </script>
